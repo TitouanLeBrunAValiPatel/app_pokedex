@@ -15,7 +15,7 @@
  */
 package com.example.marsphotos.fake
 
-import com.example.marsphotos.model.MarsPhoto
+import com.example.marsphotos.model.Pokemon
 
 object FakeDataSource {
 
@@ -24,11 +24,11 @@ object FakeDataSource {
     private const val imgOne = "url.one"
     private const val imgTwo = "url.two"
     val photosList = listOf(
-        MarsPhoto(
+        Pokemon(
             id = idOne,
             imgSrc = imgOne
         ),
-        MarsPhoto(
+        Pokemon(
             id = idTwo,
             imgSrc = imgTwo
         )

@@ -18,54 +18,105 @@
 
 package com.example.marsphotos.ui
 
+import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.marsphotos.R
-import com.example.marsphotos.ui.screens.HomeScreen
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.example.marsphotos.data.sharedPreferences.PokemonFavoriteManager
 import com.example.marsphotos.ui.screens.PokemonViewModel
+import com.example.marsphotos.ui.screens.components.BottomBar
+import com.example.marsphotos.ui.screens.components.PokemonTopAppBar
+import com.example.marsphotos.ui.screens.home.Home
+import com.example.marsphotos.ui.screens.pokemonDetail.PokemonDetail
+import com.example.marsphotos.ui.screens.pokemonDetail.PokemonDetail.navigateToPokemonDetail
+import com.example.marsphotos.ui.screens.pokemonDetail.PokemonDetail.pokemonDetailNavigationEntry
+import com.example.marsphotos.ui.screens.pokemonFavorite.PokemonFavorite
+import com.example.marsphotos.ui.screens.pokemonFavorite.PokemonFavorite.pokemonsFavoriteNavigationEntry
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PokemonApp() {
+fun PokemonApp(){
+    val navController = rememberNavController()
+
+    var currentScreenTitle by rememberSaveable { mutableStateOf("Home") }
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { PokemonTopAppBar(scrollBehavior = scrollBehavior) }
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxSize()
+//        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = { PokemonTopAppBar(
+            currentScreen = currentScreenTitle,
+            scrollBehavior = scrollBehavior,
+            navigateBack = { navController.popBackStack() }
+        ) },
+        bottomBar = { BottomBar(
+            navToFavorite = { navController.navigate(route = PokemonFavorite.Route) },
+            navToHome = { navController.navigate(route = Home.Route) }
+
+        ) }
+    ) { innerPadding ->
+        val pokemonViewModel: PokemonViewModel =
+            viewModel(factory = PokemonViewModel.Factory)
+        NavHost(
+            navController = navController,
+            startDestination = Home.Route,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
-            val pokemonViewModel: PokemonViewModel =
-                viewModel(factory = PokemonViewModel.Factory)
-            HomeScreen(
-                pokemonsUiState = pokemonViewModel.mPokemonsUiState,
-                contentPadding = it
+            composable(route = Home.Route) {
+                Home.Screen(
+                    pokemonsUiState = pokemonViewModel.mPokemonsUiState,
+                    searchText = pokemonViewModel.mSearchText,
+                    retryAction = pokemonViewModel::getPokemons,
+                    contentPadding = innerPadding,
+                    setText = { pokemonViewModel.mSearchText = it } ,
+                    listPokemon = pokemonViewModel.mPokemonsFilter,
+                    setTitle = { currentScreenTitle = it },
+                    setListPokemon = pokemonViewModel::filterListPokemon,
+                    onPokemonClicked = { navController.navigateToPokemonDetail(it) }
+                    )
+            }
+
+            pokemonDetailNavigationEntry(
+                pokemonViewModel = pokemonViewModel,
+                setTitle = { currentScreenTitle = it }
             )
+
+            pokemonsFavoriteNavigationEntry(
+                onPokemonClicked = { navController.navigateToPokemonDetail(it) },
+                setTitle = { currentScreenTitle = it } ,
+                pokemonViewModel = pokemonViewModel
+            )
+
         }
     }
 }
 
-@Composable
-fun PokemonTopAppBar(scrollBehavior: TopAppBarScrollBehavior, modifier: Modifier = Modifier) {
-    CenterAlignedTopAppBar(
-        scrollBehavior = scrollBehavior,
-        title = {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineSmall,
-            )
-        },
-        modifier = modifier
-    )
-}
+

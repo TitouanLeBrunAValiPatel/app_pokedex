@@ -14,10 +14,22 @@
   ~ limitations under the License.
   -->
 <resources>
-    <string name="app_name">Mars Photos</string>
+    <string name="app_name">Pokedex</string>
     <string name="loading_failed">Failed to load</string>
     <string name="retry">Retry</string>
     <string name="loading">Loading</string>
     <string name="placeholder_success">Placeholder text</string>
-    <string name="mars_photo">Mars photo</string>
+    <string name="pokemon_photo">Pokemon photo</string>
+    <string name="pokemon_detail_name">Pokemon Detail</string>
+    <string name="pokemon_types" />
+    <string name="pokemon_type_photo">Photo type</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_favorite_pokemon">Favorite</string>
+    <string name="favorite_button">Favorite Button</string>
+    <string name="no_favorite_pokemon">There is no pokemon favorite</string>
+    <string name="button_back">Back</string>
+    <string name="search_pokemon_bar">Search a pokemon by name</string>
+    <string name="home_title">Pokedex</string>
+    <string name="pokemondetail_title">Pokemon Detail %1$s</string>
+    <string name="pokemonfavorite_title">Pokemons Favorite</string>
 </resources>

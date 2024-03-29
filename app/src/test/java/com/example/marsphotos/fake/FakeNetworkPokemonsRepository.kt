@@ -19,7 +19,7 @@ import com.example.marsphotos.data.PokemonsRepository
 import com.example.marsphotos.model.Pokemon
 
 class FakeNetworkPokemonsRepository : PokemonsRepository{
-    override suspend fun getPokemon(): List<Pokemon> {
+    override suspend fun getPokemons(): List<Pokemon> {
         return FakeDataSource.photosList
     }
 }

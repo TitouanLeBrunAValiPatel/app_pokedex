@@ -17,21 +17,13 @@ package com.example.marsphotos.data
 
 import com.example.marsphotos.model.Pokemon
 import com.example.marsphotos.network.PokemonApiService
-
-/**
- * Repository that fetch mars photos list from marsApi.
- */
 interface PokemonsRepository {
-    /** Fetches list of MarsPhoto from marsApi */
-    suspend fun getPokemon(): List<Pokemon>
+    suspend fun getPokemons(): List<Pokemon>
+    suspend fun getPokemon(idPokemon: Int): Pokemon
 }
-
-/**
- * Network Implementation of Repository that fetch mars photos list from marsApi.
- */
 class NetworkPokemonsRepository(
     private val pokemonApiService: PokemonApiService
 ) : PokemonsRepository {
-    /** Fetches list of MarsPhoto from marsApi*/
-    override suspend fun getPokemon(): List<Pokemon> = pokemonApiService.getPokemons()
+    override suspend fun getPokemons(): List<Pokemon> = pokemonApiService.getPokemons()
+    override suspend fun getPokemon(idPokemon: Int): Pokemon = pokemonApiService.getPokemon(idPokemon)
 }

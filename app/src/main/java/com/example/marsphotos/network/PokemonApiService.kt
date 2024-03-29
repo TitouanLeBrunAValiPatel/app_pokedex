@@ -18,16 +18,11 @@ package com.example.marsphotos.network
 
 import com.example.marsphotos.model.Pokemon
 import retrofit2.http.GET
-
-/**
- * A public interface that exposes the [getPokemons] method
- */
+import retrofit2.http.Path
 interface PokemonApiService {
-    /**
-     * Returns a [List] of [Pokemon] and this method can be called from a Coroutine.
-     * The @GET annotation indicates that the "photos" endpoint will be requested with the GET
-     * HTTP method
-     */
     @GET("pokemon")
     suspend fun getPokemons(): List<Pokemon>
+
+    @GET("pokemon/{idPokemon}")
+    suspend fun getPokemon(@Path("idPokemon") idPokemon: Int): Pokemon
 }

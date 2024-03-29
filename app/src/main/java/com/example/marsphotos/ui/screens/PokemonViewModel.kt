@@ -15,6 +15,7 @@
  */
 package com.example.marsphotos.ui.screens
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -26,6 +27,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.marsphotos.PokemonApplication
 import com.example.marsphotos.data.PokemonsRepository
+import com.example.marsphotos.data.sharedPreferences.PokemonFavoriteManager
 import com.example.marsphotos.model.Pokemon
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -35,34 +37,77 @@ import java.io.IOException
  * UI state for the Home screen
  */
 sealed interface PokemonsUiState {
-    data class Success(val pokemons: String) : PokemonsUiState
+    data class Success(val pokemons: List<Pokemon>) : PokemonsUiState
+    data class PokemonDetailsSuccess(val pokemon: Pokemon) : PokemonsUiState
+
     object Error : PokemonsUiState
     object Loading : PokemonsUiState
 }
 
-class PokemonViewModel(private val pokemonsRepository: PokemonsRepository) : ViewModel() {
-    /** The mutable State that stores the status of the most recent request */
+class PokemonViewModel(
+    private val pokemonsRepository: PokemonsRepository,
+    private val pokemonFavoriteManager: PokemonFavoriteManager
+) : ViewModel() {
     var mPokemonsUiState: PokemonsUiState by mutableStateOf(PokemonsUiState.Loading)
         private set
+    var mPokemonsFavoriteUiState: PokemonsUiState by mutableStateOf(PokemonsUiState.Loading)
+        private set
 
-    /**
-     * Call getMarsPhotos() on init so we can display status immediately.
-     */
+    var mPokemonUiState: PokemonsUiState by mutableStateOf(PokemonsUiState.Loading)
+        private set
+    var mPokemons: List<Pokemon> by mutableStateOf(listOf())
+        private set
+
+    var mPokemonsFavorite: List<Pokemon> by mutableStateOf(listOf())
+        private set
+    var mPokemonsFilter: List<Pokemon> by mutableStateOf(mPokemons)
+        private set
+
+    var mSearchText: String by mutableStateOf("")
+    var mPokemon: Pokemon? by mutableStateOf(null)
+        private set
+
     init {
         getPokemons()
     }
-
-    /**
-     * Gets Mars photos information from the Mars API Retrofit service and updates the
-     * [Pokemon] [List] [MutableList].
-     */
     fun getPokemons() {
         viewModelScope.launch {
             mPokemonsUiState = PokemonsUiState.Loading
             mPokemonsUiState = try {
-                val listResult = pokemonsRepository.getPokemon()
+                mPokemons = pokemonsRepository.getPokemons()
+
                 PokemonsUiState.Success(
-                    "Success: ${listResult.size} Pokemon photos retrieved"
+                    mPokemons
+                )
+            } catch (e: IOException) {
+                PokemonsUiState.Error
+            } catch (e: HttpException) {
+                PokemonsUiState.Error
+            }
+            filterListPokemon()
+
+        }
+    }
+
+    fun filterListPokemon() {
+        mPokemonsFilter =
+            if(mSearchText.isBlank()) {
+                mPokemons
+            } else {
+                mPokemons.filter {
+                        pokemon -> pokemon.name.contains(mSearchText, ignoreCase = true)
+                }
+            }
+
+}
+
+    fun getPokemon(idPokemon: Int) {
+        viewModelScope.launch {
+            mPokemonUiState = PokemonsUiState.Loading
+            mPokemonUiState = try {
+                mPokemon = pokemonsRepository.getPokemon(idPokemon)
+                PokemonsUiState.PokemonDetailsSuccess(
+                    mPokemon!!
                 )
             } catch (e: IOException) {
                 PokemonsUiState.Error
@@ -70,6 +115,23 @@ class PokemonViewModel(private val pokemonsRepository: PokemonsRepository) : Vie
                 PokemonsUiState.Error
             }
         }
+    }
+
+    fun getFavoritePokemon() {
+        viewModelScope.launch {
+            mPokemonsFavoriteUiState = PokemonsUiState.Loading
+            mPokemonsFavoriteUiState = try {
+                mPokemonsFavorite = pokemonFavoriteManager.getPokemonsFavorite(pokemonsRepository)!!
+                PokemonsUiState.Success(
+                    mPokemonsFavorite
+                )
+            } catch (e: IOException) {
+                PokemonsUiState.Error
+            } catch (e: HttpException) {
+                PokemonsUiState.Error
+            }
+        }
+
     }
 
     /**
@@ -80,7 +142,10 @@ class PokemonViewModel(private val pokemonsRepository: PokemonsRepository) : Vie
             initializer {
                 val application = (this[APPLICATION_KEY] as PokemonApplication)
                 val pokemonsRepository = application.container.pokemonsRepository
-                PokemonViewModel(pokemonsRepository = pokemonsRepository)
+                val pokemonFavoriteManager = application.container.providePokemonFavoriteManager(application.applicationContext)
+                PokemonViewModel(pokemonsRepository = pokemonsRepository,
+                    pokemonFavoriteManager = pokemonFavoriteManager
+                )
             }
         }
     }

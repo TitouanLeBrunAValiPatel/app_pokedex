@@ -15,8 +15,6 @@
  */
 package com.example.marsphotos.ui.screens.home
 
-import android.icu.text.CaseMap.Title
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +30,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -47,23 +50,28 @@ import com.example.marsphotos.model.Pokemon
 import com.example.marsphotos.ui.screens.PokemonsUiState
 import com.example.marsphotos.ui.screens.components.ErrorScreen
 import com.example.marsphotos.ui.screens.components.LoadingScreen
-object HomeScreen {
+import com.example.marsphotos.ui.screens.home.views.PokemonsGridScreen
+
+object Home {
     private const val RouteBase = "Start"
-//    private const val AnimalArgument = "animalId"
-    private const val Route = "$RouteBase"
-    private const val Title = "Pokedex"
+    const val Route = "$RouteBase"
+    var Title: MutableState<String> = mutableStateOf("")
+
     @Composable
-    fun HomeScreen(
+    fun Screen(
         pokemonsUiState: PokemonsUiState,
         retryAction: () -> Unit,
         searchText: String,
         setText: (String) -> Unit,
+        setTitle: (String) -> Unit,
         setListPokemon: () -> Unit,
         listPokemon: List<Pokemon>,
         modifier: Modifier = Modifier,
         onPokemonClicked: (Int) -> Unit,
         contentPadding: PaddingValues = PaddingValues(0.dp),
     ) {
+        Title.value = stringResource(id = R.string.home_title)
+        setTitle(Title.value)
 
         when (pokemonsUiState) {
             is PokemonsUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
@@ -89,83 +97,4 @@ object HomeScreen {
         }
     }
 
-    @Composable
-    fun PokemonsGridScreen(
-        onPokemonClicked: (Int) -> Unit,
-        setText: (String) -> Unit,
-        setListPokemon: () -> Unit,
-        listPokemon: List<Pokemon>,
-        searchText: String,
-        modifier: Modifier = Modifier,
-        contentPadding: PaddingValues = PaddingValues(0.dp),
-    ) {
-        Column {
-            TextField(value = searchText,
-                onValueChange = {
-                    setText(it)
-                    setListPokemon()
-                },
-                modifier = modifier.fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        text = "Search a pokemon by name"
-                    )
-                })
-
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(200.dp),
-                modifier = modifier.padding(10.dp),
-                contentPadding = contentPadding,
-            ) {
-                items(items = listPokemon,
-                    key = { pokemon -> pokemon.id }) { pokemon ->
-                    PokemonCard(
-                        onPokemonClicked = onPokemonClicked, pokemon = pokemon,
-                        modifier = modifier
-                            .padding(10.dp)
-                            .fillMaxSize()
-                    )
-                }
-            }
-        }
-
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun PokemonCard(
-        onPokemonClicked: (Int) -> Unit,
-        pokemon: Pokemon, modifier: Modifier = Modifier
-    ) {
-        Card(
-            modifier = modifier,
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            onClick = { onPokemonClicked(pokemon.id) }
-        ) {
-            Column(
-                modifier = Modifier.padding(8.dp)
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context = LocalContext.current)
-                        .data(pokemon.imgSrc)
-                        .crossfade(true)
-                        .build(),
-                    error = painterResource(R.drawable.ic_broken_image),
-                    placeholder = painterResource(R.drawable.loading_img),
-                    contentDescription = stringResource(R.string.pokemon_photo),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
-
-                Text(
-                    text = pokemon.name,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color.Black
-                )
-            }
-        }
-    }
 }
